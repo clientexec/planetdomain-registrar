@@ -62,7 +62,7 @@ class PluginPlanetdomain extends RegistrarPlugin {
             CE_Lib::log(4, 'PlanetDomain Error: ' . print_r($return->getModuleError(), true));
             $status = 1;
         }
-        $domains[] = array("tld"=>$params['sld'],"domain"=>$params['tld'],"status"=>$status);
+        $domains[] = array("tld"=>$params['tld'],"domain"=>$params['sld'],"status"=>$status);
         return array("result"=>$domains);
     }
 
