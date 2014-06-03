@@ -10,39 +10,39 @@ class PluginPlanetdomain extends RegistrarPlugin {
     function getVariables(){
 
         $variables = array(
-            /*T*/'Plugin Name'/*/T*/ => array (
+            lang('Plugin Name') => array (
                                 'type'          =>'hidden',
-                                'description'   =>/*T*/'How CE sees this plugin (not to be confused with the Signup Name)'/*/T*/,
-                                'value'         =>/*T*/'PlanetDomain'/*/T*/
+                                'description'   =>lang('How CE sees this plugin (not to be confused with the Signup Name)'),
+                                'value'         =>lang('PlanetDomain')
                                ),
-            /*T*/'Account No'/*/T*/ => array(
+            lang('Account No') => array(
                                 'type'          => 'text',
-                                'description'   => /*T*/'Enter your Account No found in API Login Credentials.'/*/T*/,
+                                'description'   => lang('Enter your Account No found in API Login Credentials.'),
                                 'value'         => '',
                             ),
-            /*T*/'Login'/*/T*/  => array(
+            lang('Login')  => array(
                                 'type'          => 'text',
-                                'description'   => /*T*/'Enter your Login found in API Login Credentials..'/*/T*/,
+                                'description'   => lang('Enter your Login found in API Login Credentials..'),
                                 'value'         => '',
                             ),
-            /*T*/'Password'/*/T*/  => array(
+            lang('Password')  => array(
                                 'type'          => 'password',
-                                'description'   => /*T*/'Enter your Password found in API Login Credentials.'/*/T*/,
+                                'description'   => lang('Enter your Password found in API Login Credentials.'),
                                 'value'         => '',
                             ),
-            /*T*/'Supported Features'/*/T*/  => array(
+            lang('Supported Features')  => array(
                                 'type'          => 'label',
-                                'description'   => '* './*T*/'TLD Lookup'/*/T*/.'<br>* './*T*/'Domain Registration'/*/T*/.' <br>* './*T*/'Get Nameserver Records'/*/T*/.' <br>* './*T*/'Get / Set Registrar Lock'/*/T*/.' <br>* './*T*/'Get / Set Contact Information'/*/T*/.' <br>',
+                                'description'   => '* '.lang('TLD Lookup').'<br>* '.lang('Domain Registration').' <br>* '.lang('Get Nameserver Records').' <br>* '.lang('Get / Set Registrar Lock').' <br>* '.lang('Get / Set Contact Information').' <br>',
                                 'value'         => ''
                                 ),
-            /*T*/'Actions'/*/T*/ => array (
+            lang('Actions') => array (
                                 'type'          => 'hidden',
-                                'description'   => /*T*/'Current actions that are active for this plugin (when a domain isn\'t registered)'/*/T*/,
+                                'description'   => lang('Current actions that are active for this plugin (when a domain isn\'t registered)'),
                                 'value'         => 'Register'
                                 ),
-            /*T*/'Registered Actions'/*/T*/ => array (
+            lang('Registered Actions') => array (
                                 'type'          => 'hidden',
-                                'description'   => /*T*/'Current actions that are active for this plugin (when a domain is registered)'/*/T*/,
+                                'description'   => lang('Current actions that are active for this plugin (when a domain is registered)'),
                                 'value'         => 'Cancel',
                                 )
         );
