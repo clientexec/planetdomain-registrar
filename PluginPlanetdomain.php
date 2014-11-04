@@ -278,6 +278,11 @@ class PluginPlanetdomain extends RegistrarPlugin {
         throw new MethodNotImplemented('PlanetDomain does not currently support updating of name servers..');
     }
 
+    function getDNS ($params)
+    {
+        throw new MethodNotImplemented('Method getDNS() has not been implemented yet.');
+    }
+
     function checkNSStatus ($params)
     {
         throw new MethodNotImplemented('Method checkNSStatus() has not been implemented yet.');
