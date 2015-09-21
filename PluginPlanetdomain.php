@@ -91,6 +91,7 @@ class PluginPlanetdomain extends RegistrarPlugin {
             'contactdetails' => array (
                 'Registrant' =>
                     array (
+                        'OrganisationName' => $params['RegistrantOrganizationName'],
                         'FirstName' => $params['RegistrantFirstName'],
                         'LastName' => $params['RegistrantLastName'],
                         'Address1' => $params['RegistrantAddress1'],
@@ -103,6 +104,7 @@ class PluginPlanetdomain extends RegistrarPlugin {
                 ),
                 'Admin' =>
                     array (
+                        'OrganisationName' => $params['RegistrantOrganizationName'],
                         'FirstName' => $params['RegistrantFirstName'],
                         'LastName' => $params['RegistrantLastName'],
                         'Address1' => $params['RegistrantAddress1'],
@@ -115,7 +117,8 @@ class PluginPlanetdomain extends RegistrarPlugin {
                 ),
                 'Tech' =>
                     array (
-                       'FirstName' => $params['RegistrantFirstName'],
+                        'OrganisationName' => $params['RegistrantOrganizationName'],
+                        'FirstName' => $params['RegistrantFirstName'],
                         'LastName' => $params['RegistrantLastName'],
                         'Address1' => $params['RegistrantAddress1'],
                         'City' => $params['RegistrantCity'],
@@ -127,7 +130,8 @@ class PluginPlanetdomain extends RegistrarPlugin {
                 ),
                 'Billing' =>
                     array (
-                       'FirstName' => $params['RegistrantFirstName'],
+                        'OrganisationName' => $params['RegistrantOrganizationName'],
+                        'FirstName' => $params['RegistrantFirstName'],
                         'LastName' => $params['RegistrantLastName'],
                         'Address1' => $params['RegistrantAddress1'],
                         'City' => $params['RegistrantCity'],
@@ -204,6 +208,7 @@ class PluginPlanetdomain extends RegistrarPlugin {
             'contactdetails' => array (
                 'Registrant' =>
                     array (
+                        'OrganisationName' => $params['Registrant_OrganizationName'],
                         'FirstName' => $params['Registrant_FirstName'],
                         'LastName' => $params['Registrant_LastName'],
                         'Address1' => $params['Registrant_Address1'],
