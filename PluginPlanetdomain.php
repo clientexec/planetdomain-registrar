@@ -11,40 +11,45 @@ class PluginPlanetdomain extends RegistrarPlugin {
 
         $variables = array(
             lang('Plugin Name') => array (
-                                'type'          =>'hidden',
-                                'description'   =>lang('How CE sees this plugin (not to be confused with the Signup Name)'),
-                                'value'         =>lang('PlanetDomain')
-                               ),
+                'type'          =>'hidden',
+                'description'   =>lang('How CE sees this plugin (not to be confused with the Signup Name)'),
+                'value'         =>lang('PlanetDomain')
+            ),
             lang('Account No') => array(
-                                'type'          => 'text',
-                                'description'   => lang('Enter your Account No found in API Login Credentials.'),
-                                'value'         => '',
-                            ),
+                'type'          => 'text',
+                'description'   => lang('Enter your Account No found in API Login Credentials.'),
+                'value'         => '',
+            ),
             lang('Login')  => array(
-                                'type'          => 'text',
-                                'description'   => lang('Enter your Login found in API Login Credentials..'),
-                                'value'         => '',
-                            ),
+                'type'          => 'text',
+                'description'   => lang('Enter your Login found in API Login Credentials..'),
+                'value'         => '',
+            ),
             lang('Password')  => array(
-                                'type'          => 'password',
-                                'description'   => lang('Enter your Password found in API Login Credentials.'),
-                                'value'         => '',
-                            ),
+                'type'          => 'password',
+                'description'   => lang('Enter your Password found in API Login Credentials.'),
+                'value'         => '',
+            ),
+            lang('Default Account') => array(
+                'type'          => 'text',
+                'description'   => lang('Enter the Account Reference all domain names should be registered under.  Leaving this blank will create a different account for each client at the registrar.'),
+                'value'         => '',
+            ),
             lang('Supported Features')  => array(
-                                'type'          => 'label',
-                                'description'   => '* '.lang('TLD Lookup').'<br>* '.lang('Domain Registration').' <br>* '.lang('Get Nameserver Records').' <br>* '.lang('Get / Set Registrar Lock').' <br>* '.lang('Get / Set Contact Information').' <br>',
-                                'value'         => ''
-                                ),
+                'type'          => 'label',
+                'description'   => '* '.lang('TLD Lookup').'<br>* '.lang('Domain Registration').'<br>* '.lang('Automatically Renew Domain').'<br>* '.lang('Get / Set Nameserver Records').' <br>* '.lang('Get / Set Registrar Lock').' <br>* '.lang('Get / Set Contact Information').' <br>',
+                'value'         => ''
+            ),
             lang('Actions') => array (
-                                'type'          => 'hidden',
-                                'description'   => lang('Current actions that are active for this plugin (when a domain isn\'t registered)'),
-                                'value'         => 'Register'
-                                ),
+                'type'          => 'hidden',
+                'description'   => lang('Current actions that are active for this plugin (when a domain isn\'t registered)'),
+                'value'         => 'Register'
+            ),
             lang('Registered Actions') => array (
-                                'type'          => 'hidden',
-                                'description'   => lang('Current actions that are active for this plugin (when a domain is registered)'),
-                                'value'         => 'Cancel',
-                                )
+                'type'          => 'hidden',
+                'description'   => lang('Current actions that are active for this plugin (when a domain is registered)'),
+                'value'         => 'Renew (Renew Domain),Cancel',
+            )
         );
 
         return $variables;
@@ -83,11 +88,33 @@ class PluginPlanetdomain extends RegistrarPlugin {
         );
     }
 
+    function getDomainCredentials($params)
+    {
+        if  ( $params['Default Account'] != '' ) {
+            return array(
+                'AccountOption' => 'CONSOLE',
+                'AccountID'     => $params['Default Account']
+            );
+        } else {
+            $userPackage = new UserPackage($params['userPackageId']);
+            return array(
+                'AccountOption' => 'EXTERNAL',
+                'AccountID'     => $userPackage->CustomerId
+            );
+        }
+    }
+
+    function getDomainRenewArgs($params)
+    {
+        return array(
+            'regperiod' => $params['NumYears'],
+        );
+    }
+
     function getDomainRegArgs($params)
     {
         return array(
             'regperiod' => $params['NumYears'],
-            'AccountOption' => 'EXTERNAL',
             'contactdetails' => array (
                 'Registrant' =>
                     array (
@@ -154,25 +181,49 @@ class PluginPlanetdomain extends RegistrarPlugin {
     {
         $userPackage = new UserPackage($params['userPackageId']);
         $orderId = $this->registerDomain($this->buildRegisterParams($userPackage,$params));
-        // PlanetDomain doesn't return a registrar order id, so just use the package ID.
         $userPackage->setCustomField("Registrar Order Id",$userPackage->getCustomField("Registrar").'-'.$orderId);
         return $userPackage->getCustomField('Domain Name') . ' has been registered.';
     }
 
     function registerDomain($params)
     {
-        $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params), $this->getDomainRegArgs($params));
+        $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params), $this->getDomainCredentials($params), $this->getDomainRegArgs($params));
         $api = new OrderAPI($args);
         $return = $api->domainRegister();
         if ( $return->isSuccess() ) {
-            return $return->response();
+            return $return->getResponse();
         } else {
             $errorMessage = 'PlanetDomain Error: ' . print_r($return->getModuleError(), true);
             CE_Lib::log(4, $errorMessage);
-            throw new Exception($errorMessage);
+            throw new CE_Exception($errorMessage);
         }
         // XXX PlanetDomain does not offer a valid testing platform, so we can not test ExtendedAttributes.
     }
+
+
+    function doRenew($params)
+    {
+        $userPackage = new UserPackage($params['userPackageId']);
+        $orderid = $this->renewDomain($this->buildRenewParams($userPackage,$params));
+        $userPackage->setCustomField("Registrar Order Id",$userPackage->getCustomField("Registrar").'-'.$orderid);
+        return $userPackage->getCustomField('Domain Name') . ' has been renewed.';
+    }
+
+    function renewDomain($params)
+    {
+        $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params), $this->getDomainCredentials($params), $this->getDomainRenewArgs($params));
+        $api = new OrderAPI($args);
+        $results = $api->domainRenewal();
+        if ( $return->isSuccess() ) {
+            return $return->getResponse();
+        } else {
+            $errorMessage = 'PlanetDomain Error: ' . print_r($return->getModuleError(), true);
+            CE_Lib::log(4, $errorMessage);
+            throw new CE_Exception($errorMessage);
+        }
+    }
+
+
 
     function getContactInformation($params){
         $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params));
@@ -183,18 +234,17 @@ class PluginPlanetdomain extends RegistrarPlugin {
         if ( $results->isSuccess() ) {
             $info = array();
 
-            $info['Registrant']['OrganizationName']  = array($this->user->lang('Organization'), $results->getParams('Owner-OrganisationName'));
-            $info['Registrant']['FirstName'] = array($this->user->lang('First Name'), $results->getParams('Owner-FirstName'));
-            $info['Registrant']['LastName'] = array($this->user->lang('Last Name'), $results->getParams('Owner-LastName'));
-            $info['Registrant']['Address1']  = array($this->user->lang('Address').' 1', $results->getParams('Owner-Address1'));
-            $info['Registrant']['Address2']  = array($this->user->lang('Address').' 2', $results->getParams('Owner-Address2'));
-            $info['Registrant']['City']      = array($this->user->lang('City'), $results->getParams('Owner-City'));
-            $info['Registrant']['StateProv']  = array($this->user->lang('Province').'/'.$this->user->lang('State'), $results->getParams('Owner-Region'));
-            $info['Registrant']['Country']   = array($this->user->lang('Country'), $results->getParams('Owner-CountryCode'));
-            $info['Registrant']['PostalCode']  = array($this->user->lang('Postal Code').'/'.$this->user->lang('Zip'), $results->getParams('Owner-PostalCode'));
-            $info['Registrant']['EmailAddress']   = array($this->user->lang('E-mail'), $results->getParams('Owner-Email'));
-            $info['Registrant']['Phone']  = array($this->user->lang('Phone'), $results->getParams('Owner-PhoneNumber'));
-
+            $info['Registrant']['OrganizationName']  = array($this->user->lang('Organization'), $results->get('Owner-OrganisationName'));
+            $info['Registrant']['FirstName'] = array($this->user->lang('First Name'), $results->get('Owner-FirstName'));
+            $info['Registrant']['LastName'] = array($this->user->lang('Last Name'), $results->get('Owner-LastName'));
+            $info['Registrant']['Address1']  = array($this->user->lang('Address').' 1', $results->get('Owner-Address1'));
+            $info['Registrant']['Address2']  = array($this->user->lang('Address').' 2', $results->get('Owner-Address2'));
+            $info['Registrant']['City']      = array($this->user->lang('City'), $results->get('Owner-City'));
+            $info['Registrant']['StateProv']  = array($this->user->lang('Province').'/'.$this->user->lang('State'), $results->get('Owner-Region'));
+            $info['Registrant']['Country']   = array($this->user->lang('Country'), $results->get('Owner-CountryCode'));
+            $info['Registrant']['PostalCode']  = array($this->user->lang('Postal Code').'/'.$this->user->lang('Zip'), $results->get('Owner-PostalCode'));
+            $info['Registrant']['EmailAddress']   = array($this->user->lang('E-mail'), $results->get('Owner-Email'));
+            $info['Registrant']['Phone']  = array($this->user->lang('Phone'), $results->get('Owner-PhoneNumber'));
             return $info;
         } else {
             throw new Exception('Failed to retrieve data from PlanetDomain');
@@ -280,12 +330,26 @@ class PluginPlanetdomain extends RegistrarPlugin {
 
     function setNameServers ($params)
     {
-        throw new MethodNotImplemented('PlanetDomain does not currently support updating of name servers..');
+        $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params));
+        $args = array_merge($args, array('RemoveHost' => 'ALL'));
+
+        $nameServers = array();
+        foreach ( $params['ns'] as $ns ) {
+            $nameServers[] = $ns;
+        }
+        $args = array_merge($args, array('AddHost' => $nameServers));
+
+        $api = new OrderAPI($args);
+        $results = $api->domainDelegation();
+        if(!$results->isSuccess()) {
+            $error = $results->getModuleError();
+            throw new Exception($error['error']);
+        }
     }
 
     function getDNS ($params)
     {
-        throw new MethodNotImplemented('Method getDNS() has not been implemented yet.');
+        throw new CE_Exception('PlanetDomain does not support creating host records in their API.');
     }
 
     function checkNSStatus ($params)

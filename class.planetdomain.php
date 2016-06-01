@@ -229,7 +229,7 @@ class OrderAPI extends API
     {
         $postParams = $this->getPostParams('Domain', 'UpdateHosts');
         $postParams['Domain'] = $this->getDomain();
-        $postParams['AddHost'] = $this->getNameServers();
+        $postParams['AddHost'] = $this->params['AddHost'];
         $postParams['RemoveHost'] = 'ALL';
         return $this->execute($postParams);
     }
