@@ -92,14 +92,14 @@ class PluginPlanetdomain extends RegistrarPlugin {
     {
         if  ( $params['Default Account'] != '' ) {
             return array(
-                'AccountOption' => 'CONSOLE',
-                'AccountID'     => $params['Default Account']
+                'AccountOption'     => 'CONSOLE',
+                'AccountReference'  => $params['Default Account']
             );
         } else {
             $userPackage = new UserPackage($params['userPackageId']);
             return array(
-                'AccountOption' => 'EXTERNAL',
-                'AccountID'     => $userPackage->CustomerId
+                'AccountOption'     => 'EXTERNAL',
+                'AccountReference'  => $userPackage->CustomerId
             );
         }
     }

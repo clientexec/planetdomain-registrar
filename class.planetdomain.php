@@ -448,12 +448,11 @@ class OrderAPI extends API
         $accountOption = APIUtils::getValue($this->params, 'AccountOption', '');
         $accountId = APIUtils::getValue($this->params, 'AccountReference', '');
 
-        if($accountOption == '1')
+        if($accountOption == 'EXTERNAL')
         {
             $accountOption = 'EXTERNAL';
-            $accountId = $this->getClientId();
         }
-        else if($accountOption == '2')
+        else if($accountOption == 'CONSOLE')
         {
             $accountOption = 'CONSOLE';
         }
