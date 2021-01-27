@@ -6,7 +6,7 @@ abstract class API
     protected $params;
     protected $sessionId = false;
 
-    protected function API($script, $params)
+    protected function __construct($script, $params)
     {
         $this->url = APIUtils::$API_URL.$script;
         $this->params = $params;
@@ -111,9 +111,9 @@ abstract class API
 class AuthAPI extends API
 {
 
-    function AuthAPI($params)
+    function __construct($params)
     {
-        parent::API('auth.pl', $params);
+        parent::__construct('auth.pl', $params);
     }
 
     function authenticate($accountNo, $userId, $password)
@@ -133,9 +133,9 @@ class AuthAPI extends API
 class QueryAPI extends API
 {
 
-    function QueryAPI($params)
+    function __construct($params)
     {
-        parent::API('query.pl', $params);
+        parent::__construct('query.pl', $params);
     }
 
     function domainLookup()
@@ -171,9 +171,9 @@ class QueryAPI extends API
 class OrderAPI extends API
 {
 
-    function OrderAPI($params)
+    function __construct($params)
     {
-        parent::API('order.pl', $params);
+        parent::__construct('order.pl', $params);
     }
 
     function domainRegister()
@@ -413,15 +413,19 @@ class OrderAPI extends API
             $registrantName = APIUtils::getValue($eligibilityForm, 'Registrant Name', '');
             $eligibilityName = APIUtils::getValue($eligibilityForm, 'Eligibility Name', '');
             $eligibilityId = APIUtils::getValue($eligibilityForm, 'Eligibility ID', '');
-            $eligibilityIdType = APIUtils::getValueConverted($eligibilityForm, 'Eligibility ID Type', APIUtils::$ELIGIBILITY_ID_TYPES, '');
-            $eligibilityType = APIUtils::getValueConverted($eligibilityForm, 'Eligibility Type', APIUtils::$ELIGIBILITY_TYPES, '');
-            $eligibilityReason = APIUtils::getValueConverted($eligibilityForm, 'Eligibility Reason', APIUtils::$ELIGIBILITY_REASONS, '');
+            $registrantIDType = APIUtils::getValue($eligibilityForm, 'Registrant ID Type', '');
+            $registrantID = APIUtils::getValue($eligibilityForm, 'Registrant ID', '');
+            $eligibilityIdType = APIUtils::getValue($eligibilityForm, 'Eligibility ID Type', APIUtils::$ELIGIBILITY_ID_TYPES, '');
+            $eligibilityType = APIUtils::getValue($eligibilityForm, 'Eligibility Type', APIUtils::$ELIGIBILITY_TYPES, '');
+            $eligibilityReason = APIUtils::getValue($eligibilityForm, 'Eligibility Reason', APIUtils::$ELIGIBILITY_REASONS, '');
+            $eligibilityIdType = APIUtils::$ELIGIBILITY_ID_TYPES[$eligibilityIdType];
 
             return array
             (
                 'RegistrantName' => $registrantName,
-                'EligibilityName' => $eligibilityName,
-                'EligibilityID' => $eligibilityId,
+                'RegistrantID' => $registrantID,
+                //'EligibilityName' => $eligibilityName,
+                //'EligibilityID' => $eligibilityId,
                 'EligibilityIDType' => $eligibilityIdType,
                 'EligibilityType' => $eligibilityType,
                 'EligibilityReason' => $eligibilityReason
@@ -482,7 +486,7 @@ class APIResult
     public $logger;
 
 
-    function APIResult($response, $auth=false)
+    function __construct($response, $auth=false)
     {
         $this->response = $response;
         $index = false;
@@ -528,6 +532,7 @@ class APIResult
         }
         else
         {
+            $responseTemp = preg_split('/\s*:\s*/', $response);
             $index = array_search('ERR', $responseTemp);
 
             if($index !== false)
@@ -605,7 +610,7 @@ class APIResult
 
     function getModuleError()
     {
-        return array('error' => $this->error);
+        return $this->error;
     }
 
 }
@@ -615,12 +620,12 @@ class APIUtils
 
     static $BRAND_NAME = 'Planet Domain';
 
-    static $API_URL = 'https://www.distributeit.com.au/api/';
+    static $API_URL = 'https://theconsole.tppwholesale.com.au/api/';
 
     static $API_COMMON_PARAMS = array
     (
         'Requester' => 'Client Exec',
-        'Version' => '1.0',
+        'Version' => '1.1',
         'Type' => 'Domains'
     );
 
@@ -745,5 +750,3 @@ class APIUtils
     }
 
 }
-
-?>

@@ -5,9 +5,16 @@ require_once dirname(__FILE__).'/class.planetdomain.php';
 /**
 * @package Plugins
 */
-class PluginPlanetdomain extends RegistrarPlugin {
+class PluginPlanetdomain extends RegistrarPlugin
+{
+    public $features = [
+        'nameSuggest' => false,
+        'importDomains' => false,
+        'importPrices' => false,
+    ];
 
-    function getVariables(){
+    function getVariables()
+    {
 
         $variables = array(
             lang('Plugin Name') => array (
@@ -61,10 +68,10 @@ class PluginPlanetdomain extends RegistrarPlugin {
         $api = new QueryAPI($args);
         $return = $api->domainLookup();
 
-        if ( $return->isSuccess() ) {
+        if ($return->isSuccess()) {
             $status = 0;
         } else {
-            CE_Lib::log(4, 'PlanetDomain Error: ' . print_r($return->getModuleError(), true));
+            CE_Lib::log(4, 'PlanetDomain Error: ' . $return->getModuleError());
             $status = 1;
         }
         $domains[] = array("tld"=>$params['tld'],"domain"=>$params['sld'],"status"=>$status);
@@ -90,7 +97,7 @@ class PluginPlanetdomain extends RegistrarPlugin {
 
     function getDomainCredentials($params)
     {
-        if  ( $params['Default Account'] != '' ) {
+        if ($params['Default Account'] != '') {
             return array(
                 'AccountOption'     => 'CONSOLE',
                 'AccountReference'  => $params['Default Account']
@@ -172,6 +179,24 @@ class PluginPlanetdomain extends RegistrarPlugin {
         );
     }
 
+    function getDomainExtraArgs($params)
+    {
+        if ($params['tld'] == 'com.au') {
+            return array(
+                'additionalfields' => array (
+                    'Registrant Name' => $params['ExtendedAttributes']['au_registrantname'],
+                    'Registrant ID' => $params['ExtendedAttributes']['au_registrantid'],
+                    'Eligibility ID Type' => $params['ExtendedAttributes']['au_entityidtype'],
+                    'Eligibility Type' => $params['ExtendedAttributes']['au_eligibilitytype'],
+                    'Eligibility Reason' => $params['ExtendedAttributes']['au_eligibilityreason'],
+                )
+            );
+        } else {
+            return array();
+        }
+    }
+
+
     /**
      * Register domain name
      *
@@ -180,32 +205,31 @@ class PluginPlanetdomain extends RegistrarPlugin {
     function doRegister($params)
     {
         $userPackage = new UserPackage($params['userPackageId']);
-        $orderId = $this->registerDomain($this->buildRegisterParams($userPackage,$params));
-        $userPackage->setCustomField("Registrar Order Id",$userPackage->getCustomField("Registrar").'-'.$orderId);
+        $orderId = $this->registerDomain($this->buildRegisterParams($userPackage, $params));
+        $userPackage->setCustomField("Registrar Order Id", $userPackage->getCustomField("Registrar").'-'.$orderId);
         return $userPackage->getCustomField('Domain Name') . ' has been registered.';
     }
 
     function registerDomain($params)
     {
-        $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params), $this->getDomainCredentials($params), $this->getDomainRegArgs($params));
+        $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params), $this->getDomainCredentials($params), $this->getDomainRegArgs($params), $this->getDomainExtraArgs($params));
         $api = new OrderAPI($args);
         $return = $api->domainRegister();
-        if ( $return->isSuccess() ) {
+        if ($return->isSuccess()) {
             return $return->getResponse();
         } else {
-            $errorMessage = 'PlanetDomain Error: ' . print_r($return->getModuleError(), true);
+            $errorMessage = 'PlanetDomain Error: ' . $return->getModuleError();
             CE_Lib::log(4, $errorMessage);
             throw new CE_Exception($errorMessage);
         }
-        // XXX PlanetDomain does not offer a valid testing platform, so we can not test ExtendedAttributes.
     }
 
 
     function doRenew($params)
     {
         $userPackage = new UserPackage($params['userPackageId']);
-        $orderid = $this->renewDomain($this->buildRenewParams($userPackage,$params));
-        $userPackage->setCustomField("Registrar Order Id",$userPackage->getCustomField("Registrar").'-'.$orderid);
+        $orderid = $this->renewDomain($this->buildRenewParams($userPackage, $params));
+        $userPackage->setCustomField("Registrar Order Id", $userPackage->getCustomField("Registrar").'-'.$orderid);
         return $userPackage->getCustomField('Domain Name') . ' has been renewed.';
     }
 
@@ -213,11 +237,11 @@ class PluginPlanetdomain extends RegistrarPlugin {
     {
         $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params), $this->getDomainCredentials($params), $this->getDomainRenewArgs($params));
         $api = new OrderAPI($args);
-        $results = $api->domainRenewal();
-        if ( $return->isSuccess() ) {
+        $return = $api->domainRenewal();
+        if ($return->isSuccess()) {
             return $return->getResponse();
         } else {
-            $errorMessage = 'PlanetDomain Error: ' . print_r($return->getModuleError(), true);
+            $errorMessage = 'PlanetDomain Error: ' . $return->getModuleError();
             CE_Lib::log(4, $errorMessage);
             throw new CE_Exception($errorMessage);
         }
@@ -225,13 +249,14 @@ class PluginPlanetdomain extends RegistrarPlugin {
 
 
 
-    function getContactInformation($params){
+    function getContactInformation($params)
+    {
         $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params));
         $api = new QueryAPI($args);
 
         $results = $api->domainWhois();
 
-        if ( $results->isSuccess() ) {
+        if ($results->isSuccess()) {
             $info = array();
 
             $info['Registrant']['OrganizationName']  = array($this->user->lang('Organization'), $results->get('Owner-OrganisationName'));
@@ -251,7 +276,8 @@ class PluginPlanetdomain extends RegistrarPlugin {
         }
     }
 
-    function setContactInformation($params){
+    function setContactInformation($params)
+    {
         $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params));
         $args = array_merge($args, array (
             'AccountOption' => 'EXTERNAL',
@@ -267,27 +293,28 @@ class PluginPlanetdomain extends RegistrarPlugin {
                         'PostalCode' => $params['Registrant_PostalCode'],
                         'CountryCode' => $params['Registrant_Country'],
                         'Email' => $params['Registrant_EmailAddress'],
-                        'PhoneNumber' => $this->_validatePhone($params['Registrant_Phone'],$params['Registrant_Country'])
+                        'PhoneNumber' => $this->_validatePhone($params['Registrant_Phone'], $params['Registrant_Country'])
                 )
             )
         ));
         $api = new OrderAPI($args);
         $results = $api->contactsUpdate();
 
-        if($results->isSuccess()) {
+        if ($results->isSuccess()) {
             return true;
         } else {
             throw new Exception($results->getModuleError());
         }
     }
 
-    function getGeneralInfo($params) {
+    function getGeneralInfo($params)
+    {
         $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params));
 
         $api = new QueryAPI($args);
         $results = $api->domainWhois();
 
-        if($results->isSuccess()) {
+        if ($results->isSuccess()) {
             $userPackage = new UserPackage($params['userPackageId']);
             $data = array();
             $data['expiration'] = $results->get('ExpiryDate');
@@ -298,107 +325,101 @@ class PluginPlanetdomain extends RegistrarPlugin {
             $data['autorenew'] = false;
 
             return $data;
-        }
-        else {
-            throw new Exception($results->getModuleError(), EXCEPTION_CODE_CONNECTION_ISSUE);
+        } else {
+            throw new CE_Exception($results->getModuleError(), EXCEPTION_CODE_CONNECTION_ISSUE);
         }
     }
 
-    function getNameServers($params){
+    function getNameServers($params)
+    {
         $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params));
 
         $api = new QueryAPI($args);
         $results = $api->domainWhois();
 
-        if($results->isSuccess()) {
-
+        if ($results->isSuccess()) {
             $nameServers = $results->getArray('Nameserver');
             $ns = array();
             $ns['hasDefault'] = false;
             $ns['usesDefault'] = false;
-            foreach($nameServers as $nameServer)
-            {
+            foreach ($nameServers as $nameServer) {
                 $ns[] = $nameServer;
             }
 
             return $ns;
-        }
-        else {
-            throw new Exception($results->getModuleError());
+        } else {
+            throw new CE_Exception($results->getModuleError());
         }
     }
 
-    function setNameServers ($params)
+    function setNameServers($params)
     {
         $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params));
         $args = array_merge($args, array('RemoveHost' => 'ALL'));
 
         $nameServers = array();
-        foreach ( $params['ns'] as $ns ) {
+        foreach ($params['ns'] as $ns) {
             $nameServers[] = $ns;
         }
         $args = array_merge($args, array('AddHost' => $nameServers));
 
         $api = new OrderAPI($args);
         $results = $api->domainDelegation();
-        if(!$results->isSuccess()) {
-            $error = $results->getModuleError();
-            throw new Exception($error['error']);
+        if (!$results->isSuccess()) {
+            throw new CE_Exception($results->getModuleError());
         }
     }
 
-    function getDNS ($params)
+    function getDNS($params)
     {
         throw new CE_Exception('PlanetDomain does not support creating host records in their API.');
     }
 
-    function checkNSStatus ($params)
+    function checkNSStatus($params)
     {
         throw new MethodNotImplemented('Method checkNSStatus() has not been implemented yet.');
     }
 
-    function registerNS ($params)
+    function registerNS($params)
     {
         throw new MethodNotImplemented('Method registerNS() has not been implemented yet.');
     }
 
-    function editNS ($params)
+    function editNS($params)
     {
         throw new MethodNotImplemented('Method editNS() has not been implemented yet.');
     }
 
-    function deleteNS ($params)
+    function deleteNS($params)
     {
         throw new MethodNotImplemented('Method deleteNS() has not been implemented yet.');
     }
 
-    function setAutorenew ($params)
+    function setAutorenew($params)
     {
-        throw new MethodNotImplemented('Method setAutorenew() has not been implemented yet.');
+        //throw new MethodNotImplemented('Method setAutorenew() has not been implemented yet.');
     }
 
-    function getRegistrarLock ($params)
+    function getRegistrarLock($params)
     {
         $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params));
 
         $api = new QueryAPI($args);
         $results = $api->domainWhois();
 
-        if($results->isSuccess()) {
+        if ($results->isSuccess()) {
             $lockStatus = $results->get('DomainStatus');
-            if ( $lockStatus == 'REGISTRAR-LOCK') {
+            if ($lockStatus == 'REGISTRAR-LOCK') {
                 return true;
             } else {
                 return false;
             }
-        }
-        else {
-             $error = $results->getModuleError();
-            throw new Exception($error['error']);
+        } else {
+            throw new CE_Exception($results->getModuleError());
         }
     }
 
-    function setRegistrarLock ($params)
+    function setRegistrarLock($params)
     {
         $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params));
         $lock = $params['lock'];
@@ -406,13 +427,12 @@ class PluginPlanetdomain extends RegistrarPlugin {
 
         $api = new OrderAPI($args);
         $results = $api->domainLock();
-        if(!$results->isSuccess()) {
-            $error = $results->getModuleError();
-            throw new Exception($error['error']);
+        if (!$results->isSuccess()) {
+            throw new Exception($results->getModuleError());
         }
     }
 
-    function sendTransferKey ($params)
+    function sendTransferKey($params)
     {
         throw new MethodNotImplemented('Method sendTransferKey() has not been implemented yet.');
     }
@@ -428,12 +448,27 @@ class PluginPlanetdomain extends RegistrarPlugin {
     function doSetRegistrarLock($params)
     {
         $userPackage = new UserPackage($params['userPackageId']);
-        $this->setRegistrarLock($this->buildLockParams($userPackage,$params));
+        $this->setRegistrarLock($this->buildLockParams($userPackage, $params));
         return "Updated Registrar Lock.";
     }
 
+    function getEPPCode($params)
+    {
+        $args = array_merge($this->getCredentials($params), $this->getDomainArgs($params));
 
-    function _validatePhone($phone, $country){
+        $api = new QueryAPI($args);
+        $results = $api->domainWhois();
+
+        if ($results->isSuccess()) {
+            return $results->get('DomainPassword');
+        } else {
+            return '';
+        }
+    }
+
+
+    function _validatePhone($phone, $country)
+    {
         // strip all non numerical values
         $phone = preg_replace('/[^\d]/', '', $phone);
 
