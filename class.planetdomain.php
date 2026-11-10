@@ -73,8 +73,10 @@ abstract class API
         curl_setopt($conn, CURLOPT_POSTFIELDS, $postFields);
         curl_setopt($conn, CURLOPT_HEADER, false);
         curl_setopt($conn, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($conn, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($conn, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($conn, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($conn, CURLOPT_SSL_VERIFYHOST, 2);
+        $caPathOrFile = \Composer\CaBundle\CaBundle::getSystemCaRootBundlePath();
+        curl_setopt($conn, is_dir($caPathOrFile) ? CURLOPT_CAPATH : CURLOPT_CAINFO, $caPathOrFile);
 
         // Execute POST
         $response = curl_exec($conn);
